@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+interface=$1
+event=$2
+
+if [[ $interface == "wlan0" ]]
+then
+    if [[ $event == "up" ]]
+    then
+        ip rule add from 192.168.12.0/24 lookup wificlient
+        ip route add 192.168.12.0/24 dev wlan0 src 192.168.12.1 table wificlient
+        iptables -A FORWARD -s 192.168.12.0/24 -d 192.168.7.0/24 -j DROP
+        iptables -A FORWARD -s 192.168.7.0/24 -d 192.168.12.0/24 -j DROP
+    fi
+    if [[ $event == "down" ]]
+    then
+        ip rule del from 192.168.12.0/24 lookup wificlient
+        ip route del 192.168.12.0/24 dev wlan0 src 192.168.12.1 table wificlient
+        iptables -D FORWARD -s 192.168.12.0/24 -d 192.168.7.0/24 -j DROP
+        iptables -D FORWARD -s 192.168.7.0/24 -d 192.168.12.0/24 -j DROP
+    fi
+fi
